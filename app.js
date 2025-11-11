@@ -47,9 +47,18 @@ app.options('*', async (req, res) => {
 
 app.post('*', async (req, res) => {
   try {
+    let url;
+    if (req.originalUrl.startsWith('/oauth2')) {
+      const suffix = req.originalUrl.replace('/oauth2', '');
+      url = `${BACKEND.replace('mcp-', 'oauth2-')}${suffix}`;
+      console.log('Routing to oauth2 backend from ', req.originalUrl, ' to ', url);
+    } else {
+      url = `${BACKEND}${req.originalUrl}`;
+    }
+    console.log(`Forwarding POST request to: ${url}`);
     const response = await axios({
       method: 'post',
-      url: `${BACKEND}${req.originalUrl}`,
+      url: url || `${BACKEND}${req.originalUrl}`,
       // forward the original raw bytes exactly
       data: req.body, // Buffer from express.raw
       headers: forwardHeaders(req),
@@ -68,9 +77,18 @@ app.post('*', async (req, res) => {
 // info on verification request payload: https://developers.facebook.com/docs/graph-api/webhooks/getting-started#verification-requests
 app.get("*", async (req, res) => {
   try {
+    let url;
+    if (req.originalUrl.startsWith('/oauth2')) {
+      const suffix = req.originalUrl.replace('/oauth2', '');
+      url = `${BACKEND.replace('mcp-', 'oauth2-')}${suffix}`;
+      console.log('Routing to oauth2 backend from ', req.originalUrl, ' to ', url);
+    } else {
+      url = `${BACKEND}${req.originalUrl}`;
+    }
+    console.log(`Forwarding GET request to: ${url}`);
     const response = await axios({
       method: 'get',
-      url: `${BACKEND}${req.originalUrl}`,
+      url: url || `${BACKEND}${req.originalUrl}`,
       headers: forwardHeaders(req),
       validateStatus: () => true,
     });
