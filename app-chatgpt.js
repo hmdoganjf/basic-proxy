@@ -1,4 +1,4 @@
-// proxy.js
+// proxy.js - ChatGPT Apps version
 const express = require('express');
 const axios = require('axios');
 const dotenv = require('dotenv');
@@ -37,7 +37,7 @@ app.options('*', async (req, res) => {
       const suffix = req.originalUrl.replace('/oauth2', '');
       url = `${BACKEND.replace('mcp-', 'oauth2-')}${suffix}`;
       url = url.replace('/chatgpt', '');
-      console.log('Routing to oauth2 backend from ', req.originalUrl, ' to ', url);
+      console.log('Routing to oauth2 [chatgpt] backend from ', req.originalUrl, ' to ', url);
     } else if (req.originalUrl.endsWith('/register-public-client')) {
       url = req.originalUrl.replace('/chatgpt', '');
     } else {
@@ -49,7 +49,7 @@ app.options('*', async (req, res) => {
       headers: forwardHeaders(req),
       validateStatus: () => true,
     });
-    console.log(`Forwarding OPTIONS request to: ${url} (${req.originalUrl})`);
+    console.log(`Forwarding OPTIONS [chatgpt] request to: ${url} (${req.originalUrl})`);
     res.status(getResponseStatus(response.status)).set(response.headers).send(response.data);
   } catch (e) {
     const status = e.response?.status ?? 502;
@@ -64,11 +64,11 @@ app.post('*', async (req, res) => {
       const suffix = req.originalUrl.replace('/oauth2', '');
       url = `${BACKEND.replace('mcp-', 'oauth2-')}${suffix}`;
       url = url.replace('/chatgpt', '');
-      console.log('Routing to oauth2 backend from ', req.originalUrl, ' to ', url);
+      console.log('Routing to oauth2 [chatgpt] backend from ', req.originalUrl, ' to ', url);
     } else {
       url = `${BACKEND}${req.originalUrl}`;
     }
-    console.log(`Forwarding POST request to: ${url}`);
+    console.log(`Forwarding POST [chatgpt] request to: ${url}`);
     const response = await axios({
       method: 'post',
       url: url || `${BACKEND}${req.originalUrl}`,
@@ -95,11 +95,12 @@ app.get("*", async (req, res) => {
       const suffix = req.originalUrl.replace('/oauth2', '');
       url = `${BACKEND.replace('mcp-', 'oauth2-')}${suffix}`;
       url = url.replace('/chatgpt', '');
-      console.log('Routing to oauth2 backend from ', req.originalUrl, ' to ', url);
+      console.log('Routing to oauth2 [chatgpt] backend from ', req.originalUrl, ' to ', url);
     } else {
       url = `${BACKEND}${req.originalUrl}`;
     }
-    console.log(`Forwarding GET request to: ${url}`);
+    url = url.replace('/chatgpt', '');
+    console.log(`Forwarding GET [chatgpt] request to: ${url}`);
     const response = await axios({
       method: 'get',
       url: url || `${BACKEND}${req.originalUrl}`,
@@ -113,4 +114,5 @@ app.get("*", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`Proxy on :${PORT}`));
+app.listen(PORT, () => console.log(`ChatGPT Apps Proxy on :${PORT}`));
+

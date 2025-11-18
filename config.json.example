@@ -1,0 +1,23 @@
+{
+  "ock": {
+    "instagram": {
+      "BACKEND_BASE_URL": "https://omerkaya.jotform.pro",
+      "NGROK_URL": "https://welcomed-whale-light.ngrok-free.app"
+    },
+    "chatgpt": {
+      "BACKEND_BASE_URL": "https://mcp-omerkaya.jotform.pro",
+      "NGROK_URL": "https://welcomed-whale-light.ngrok-free.app"
+    }
+  },
+  "hami": {
+    "instagram": {
+      "BACKEND_BASE_URL": "https://hami.jotform.pro",
+      "NGROK_URL": "https://true-elphant-dark.ngrok-free.app"
+    },
+    "chatgpt": {
+      "BACKEND_BASE_URL": "https://mcp-hami.jotform.pro",
+      "NGROK_URL": "https://true-elphant-dark.ngrok-free.app"
+    }
+  }
+}
+
