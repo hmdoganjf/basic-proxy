@@ -116,7 +116,7 @@ tmux new-session -d -s basic-proxy -x 200 -y 50
 tmux split-window -h -t basic-proxy
 
 # Run node app in left pane (pane 0)
-tmux send-keys -t basic-proxy:0.0 "export BACKEND_BASE_URL='$BACKEND_BASE_URL' && export PORT='$PORT' && export ALWAYS_RETURN_200='$ALWAYS_RETURN_200' && node $APP_FILE" C-m
+tmux send-keys -t basic-proxy:0.0 "export BACKEND_BASE_URL='$BACKEND_BASE_URL' && export NGROK_URL='$NGROK_URL' && export PORT='$PORT' && export ALWAYS_RETURN_200='$ALWAYS_RETURN_200' && node $APP_FILE" C-m
 
 # Run ngrok in right pane (pane 1)
 tmux send-keys -t basic-proxy:0.1 "export NGROK_URL='$NGROK_URL' && export PORT='$PORT' && ngrok http \$PORT --url=\$NGROK_URL --host-header=rewrite" C-m
