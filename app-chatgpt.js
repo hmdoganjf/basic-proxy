@@ -8,6 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BACKEND = process.env.BACKEND_BASE_URL;
 if (!BACKEND) throw new Error('BACKEND_BASE_URL is not set.');
+const NGROK_URL = process.env.NGROK_URL;
 const ALWAYS_RETURN_200 = process.env.ALWAYS_RETURN_200 === 'true';
 
 // IMPORTANT: capture raw body (do NOT use express.json())
@@ -30,6 +31,43 @@ function getResponseStatus(status) {
   return ALWAYS_RETURN_200 ? 200 : status;
 }
 
+app.get('/.well-known/oauth-protected-resource', (req, res) => {
+  const baseUrl = NGROK_URL || `https://${req.headers['x-forwarded-host'] || req.headers.host}`;
+  res.json({
+    resource: baseUrl,
+    authorization_servers: [baseUrl],
+    scopes_supported: [],
+    bearer_methods_supported: ['header'],
+  });
+});
+
+app.get('/.well-known/oauth-protected-resource/*', (req, res) => {
+  const baseUrl = NGROK_URL || `https://${req.headers['x-forwarded-host'] || req.headers.host}`;
+  const resourcePath = req.params[0] || '';
+  res.json({
+    resource: `${baseUrl}/${resourcePath}`,
+    authorization_servers: [baseUrl],
+    scopes_supported: [],
+    bearer_methods_supported: ['header'],
+  });
+});
+
+app.get('/.well-known/oauth-authorization-server', (req, res) => {
+  const baseUrl = NGROK_URL || `https://${req.headers['x-forwarded-host'] || req.headers.host}`;
+  res.json({
+    issuer: baseUrl,
+    authorization_endpoint: `${baseUrl}/authorize`,
+    token_endpoint: `${baseUrl}/token`,
+    registration_endpoint: `${baseUrl}/register-public-client`,
+    scopes_supported: [],
+    response_types_supported: ['code'],
+    grant_types_supported: ['authorization_code', 'refresh_token'],
+    token_endpoint_auth_methods_supported: ['client_secret_post', 'none'],
+    token_endpoint_auth_signing_alg_values_supported: ['RS256'],
+    code_challenge_methods_supported: ['S256'],
+  });
+});
+
 app.options('*', async (req, res) => {
   try {
     let url = BACKEND;
@@ -37,7 +75,8 @@ app.options('*', async (req, res) => {
     if (req.originalUrl.includes('oauth-authorization-server') || 
       req.originalUrl.includes('oauth2') || 
       req.originalUrl.includes('token') || 
-      req.originalUrl.includes('register-public-client')) {
+      req.originalUrl.includes('register-public-client') ||
+      req.originalUrl.includes('authorize')) {
       url = `${BACKEND.replace('mcp-', 'oauth2-')}${req.originalUrl}`;
       url = url.replace('/chatgpt-app', '');
     } else {
@@ -65,7 +104,8 @@ app.post('*', async (req, res) => {
     if (req.originalUrl.includes('oauth-authorization-server') || 
       req.originalUrl.includes('oauth2') || 
       req.originalUrl.includes('token') || 
-      req.originalUrl.includes('register-public-client')) {
+      req.originalUrl.includes('register-public-client') ||
+      req.originalUrl.includes('authorize')) {
       url = `${BACKEND.replace('mcp-', 'oauth2-')}${req.originalUrl}`;
       url = url.replace('/chatgpt-app', '');
     } else {
@@ -97,7 +137,8 @@ app.get("*", async (req, res) => {
     if (req.originalUrl.includes('oauth-authorization-server') || 
       req.originalUrl.includes('oauth2') || 
       req.originalUrl.includes('token') || 
-      req.originalUrl.includes('register-public-client')) {
+      req.originalUrl.includes('register-public-client') ||
+      req.originalUrl.includes('authorize')) {
       url = `${BACKEND.replace('mcp-', 'oauth2-')}${req.originalUrl}`;
       url = url.replace('/chatgpt-app', '');
     } else {
