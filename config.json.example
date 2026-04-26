@@ -1,4 +1,6 @@
 {
+  "PORT": 3000,
+  "ALWAYS_RETURN_200": false,
   "ock": {
     "instagram": {
       "BACKEND_BASE_URL": "https://omerkaya.jotform.pro",

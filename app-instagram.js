@@ -1,13 +1,10 @@
 // proxy.js
 const express = require('express');
 const axios = require('axios');
-const dotenv = require('dotenv');
+const { get } = require('./proxy-config.cjs');
 
-dotenv.config();
 const app = express();
-const PORT = process.env.PORT || 3000;
-const BACKEND = process.env.BACKEND_BASE_URL;
-if (!BACKEND) throw new Error('BACKEND_BASE_URL is not set.');
+const { port: PORT, backend: BACKEND } = get();
 
 // IMPORTANT: capture raw body (do NOT use express.json())
 app.use(express.raw({ type: '*/*' }));

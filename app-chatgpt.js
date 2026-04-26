@@ -1,14 +1,10 @@
 // proxy.js - ChatGPT Apps version
 const express = require('express');
 const axios = require('axios');
-const dotenv = require('dotenv');
-dotenv.config();
+const { get } = require('./proxy-config.cjs');
+
 const app = express();
-const PORT = process.env.PORT || 3000;
-const BACKEND = process.env.BACKEND_BASE_URL;
-if (!BACKEND) throw new Error('BACKEND_BASE_URL is not set.');
-const NGROK_URL = process.env.NGROK_URL;
-const ALWAYS_RETURN_200 = process.env.ALWAYS_RETURN_200 === 'true';
+const { port: PORT, backend: BACKEND, ngrok: NGROK_URL, alwaysReturn200: ALWAYS_RETURN_200 } = get();
 // IMPORTANT: capture raw body (do NOT use express.json())
 app.use(express.raw({ type: '*/*' }));
 function forwardHeaders(req) {
