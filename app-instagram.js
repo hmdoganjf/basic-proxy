@@ -44,17 +44,26 @@ app.post('*', async (req, res) => {
 // accepts GET requests at the /webhook endpoint. You need this URL to setup webhook initially.
 // info on verification request payload: https://developers.facebook.com/docs/graph-api/webhooks/getting-started#verification-requests
 app.get("*", async (req, res) => {
-  let status;
-  let data;
   try {
-    const response = await axios.get(`${BACKEND}${req.originalUrl}`)
-    status = response.status;
-    data = response.data;
+    const response = await axios({
+      method: 'get',
+      url: `${BACKEND}${req.originalUrl}`,
+      headers: forwardHeaders(req),
+      validateStatus: () => true,
+      maxRedirects: 0,
+    });
+
+    // RDS wraps GET responses in { content, responseCode }; unwrap unless it's a redirect.
+    const isRedirect = response.status >= 300 && response.status < 400;
+    const data = response.data;
+    if (!isRedirect && data && typeof data === 'object' && 'content' in data) {
+      res.status(response.status).send(String(data.content));
+    } else {
+      res.status(response.status).set(response.headers).send(data);
+    }
   } catch (e) {
-    status = e.response.status;
-    data = e.response.data;
-  } finally {
-    res.status(status).send(data.content);
+    const status = e.response?.status ?? 502;
+    res.status(status).send(e.response?.data ?? 'Upstream error');
   }
 });
 
