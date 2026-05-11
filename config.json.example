@@ -1,25 +1,35 @@
 {
   "PORT": 3000,
   "ALWAYS_RETURN_200": false,
-  "ock": {
-    "instagram": {
-      "BACKEND_BASE_URL": "https://omerkaya.jotform.pro",
-      "NGROK_URL": "https://welcomed-whale-light.ngrok-free.app"
-    },
-    "chatgpt": {
-      "BACKEND_BASE_URL": "https://mcp-omerkaya.jotform.pro",
-      "NGROK_URL": "https://welcomed-whale-light.ngrok-free.app"
+  "ngrok_token": "YOUR_NGROK_AUTHTOKEN",
+  "ngrok_domain": "your-static-name.ngrok-free.app",
+  "yourname": {
+    "channels": {
+      "instagram": {
+        "kind": "instagram",
+        "headers": {
+          "INSTAGRAM_INTEGRATION": {
+            "JOTFORM_APP_SECRET": "replace-me",
+            "WEBHOOK_VERIFY_TOKEN": "replace-me",
+            "SECURE_TOKEN": "replace-me",
+            "OAUTH2_SECRET": "replace-me"
+          },
+          "WEBHOOK_BASE_URL": "https://${#username}.jotform.pro/API"
+        }
+      },
+      "chatgpt": {
+        "kind": "chatgpt"
+      },
+      "instagram-facebook": {
+        "kind": "instagram",
+        "headers": {
+          "INSTAGRAM_INTEGRATION": {
+            "JOTFORM_APP_SECRET": "replace-me",
+            "WEBHOOK_BASE_URL": "https://${#username}.jotform.pro/API"
+          }
+        }
+      }
     }
   },
-  "hami": {
-    "instagram": {
-      "BACKEND_BASE_URL": "https://hami.jotform.pro",
-      "NGROK_URL": "https://true-elphant-dark.ngrok-free.app"
-    },
-    "chatgpt": {
-      "BACKEND_BASE_URL": "https://mcp-hami.jotform.pro",
-      "NGROK_URL": "https://true-elphant-dark.ngrok-free.app"
-    }
-  }
+  "_comment": "Path /{jotform-username}/{channel}/... — username is NOT a config key. Channels live under one profile (e.g. yourname); set PROXY_TUNNEL_USER if multiple profiles. ${#username} from URL path."
 }
-
