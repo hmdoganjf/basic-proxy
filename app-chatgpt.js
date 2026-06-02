@@ -7,6 +7,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BACKEND = process.env.BACKEND_BASE_URL;
 if (!BACKEND) throw new Error('BACKEND_BASE_URL is not set.');
+const MCP_BASE_URL = process.env.MCP_BASE_URL;
+if (!MCP_BASE_URL) throw new Error('MCP_BASE_URL is not set.');
 const NGROK_URL = process.env.NGROK_URL;
 const ALWAYS_RETURN_200 = process.env.ALWAYS_RETURN_200 === 'true';
 // IMPORTANT: capture raw body (do NOT use express.json())
@@ -23,6 +25,15 @@ function forwardHeaders(req) {
 }
 function getResponseStatus(status) {
   return ALWAYS_RETURN_200 ? 200 : status;
+}
+
+function getOAuthHost() {
+  return MCP_BASE_URL.replace('mcp-', 'oauth2-');
+}
+
+function rewriteRedirectLocation(responseHeaders) {
+  if (!NGROK_URL || !responseHeaders?.location) return;
+  responseHeaders.location = responseHeaders.location.replace(NGROK_URL, getOAuthHost());
 }
 
 app.get('/.well-known/oauth-protected-resource', (req, res) => {
@@ -48,9 +59,10 @@ app.get('/.well-known/oauth-protected-resource/*', (req, res) => {
 
 app.get('/.well-known/oauth-authorization-server', (req, res) => {
   const baseUrl = NGROK_URL || `https://${req.headers['x-forwarded-host'] || req.headers.host}`;
+  const oauthHost = getOAuthHost();
   res.json({
     issuer: baseUrl,
-    authorization_endpoint: `${baseUrl}/authorize`,
+    authorization_endpoint: `${oauthHost}/authorize`,
     token_endpoint: `${baseUrl}/token`,
     registration_endpoint: `${baseUrl}/register-public-client`,
     scopes_supported: [],
@@ -64,17 +76,17 @@ app.get('/.well-known/oauth-authorization-server', (req, res) => {
 
 app.options('*', async (req, res) => {
   try {
-    let url = BACKEND;
+    let url = MCP_BASE_URL;
 
     if (req.originalUrl.includes('oauth-authorization-server') || 
       req.originalUrl.includes('oauth2') || 
       req.originalUrl.includes('token') || 
       req.originalUrl.includes('register-public-client') ||
       req.originalUrl.includes('authorize')) {
-      url = `${BACKEND.replace('mcp-', 'oauth2-')}${req.originalUrl}`;
+      url = `${MCP_BASE_URL.replace('mcp-', 'oauth2-')}${req.originalUrl}`;
       url = url.replace('/chatgpt-app', '');
     } else {
-      url = `${BACKEND}${req.originalUrl}`;
+      url = `${MCP_BASE_URL}${req.originalUrl}`;
     }
 
     const response = await axios({
@@ -84,6 +96,7 @@ app.options('*', async (req, res) => {
       validateStatus: () => true,
     });
     console.log(`Forwarding OPTIONS [chatgpt] request to: ${url} (${req.originalUrl})`);
+    rewriteRedirectLocation(response.headers);
     res.status(getResponseStatus(response.status)).set(response.headers).send(response.data);
   } catch (e) {
     const status = e.response?.status ?? 502;
@@ -92,23 +105,23 @@ app.options('*', async (req, res) => {
 });
 app.post('*', async (req, res) => {
   try {
-    let url = BACKEND;
+    let url = MCP_BASE_URL;
 
     if (req.originalUrl.includes('oauth-authorization-server') || 
       req.originalUrl.includes('oauth2') || 
       req.originalUrl.includes('token') || 
       req.originalUrl.includes('register-public-client') ||
       req.originalUrl.includes('authorize')) {
-      url = `${BACKEND.replace('mcp-', 'oauth2-')}${req.originalUrl}`;
+      url = `${MCP_BASE_URL.replace('mcp-', 'oauth2-')}${req.originalUrl}`;
       url = url.replace('/chatgpt-app', '');
     } else {
-      url = `${BACKEND}${req.originalUrl}`;
+      url = `${MCP_BASE_URL}${req.originalUrl}`;
     }
 
     console.log(`Forwarding POST [chatgpt] request to: ${url} from (${req.originalUrl})`);
     const response = await axios({
       method: 'post',
-      url: url || `${BACKEND}${req.originalUrl}`,
+      url: url || `${MCP_BASE_URL}${req.originalUrl}`,
       // forward the original raw bytes exactly
       data: req.body, // Buffer from express.raw
       headers: forwardHeaders(req),
@@ -116,6 +129,7 @@ app.post('*', async (req, res) => {
       maxBodyLength: Infinity,
       validateStatus: () => true,
     });
+    rewriteRedirectLocation(response.headers);
     res.status(getResponseStatus(response.status)).set(response.headers).send(response.data);
   } catch (e) {
     const status = e.response?.status ?? 502;
@@ -125,27 +139,28 @@ app.post('*', async (req, res) => {
 
 app.get("*", async (req, res) => {
   try {
-    let url = BACKEND
+    let url = MCP_BASE_URL;
 
     if (req.originalUrl.includes('oauth-authorization-server') || 
       req.originalUrl.includes('oauth2') || 
       req.originalUrl.includes('token') || 
       req.originalUrl.includes('register-public-client') ||
       req.originalUrl.includes('authorize')) {
-      url = `${BACKEND.replace('mcp-', 'oauth2-')}${req.originalUrl}`;
+      url = `${MCP_BASE_URL.replace('mcp-', 'oauth2-')}${req.originalUrl}`;
       url = url.replace('/chatgpt-app', '');
     } else {
-      url = `${BACKEND}${req.originalUrl}`;
+      url = `${MCP_BASE_URL}${req.originalUrl}`;
     }
 
     url = url.replace('/chatgpt', '');
     console.log(`Forwarding GET [chatgpt] request to: ${url} from (${req.originalUrl})`);
     const response = await axios({
       method: 'get',
-      url: url || `${BACKEND}${req.originalUrl}`,
+      url: url || `${MCP_BASE_URL}${req.originalUrl}`,
       headers: forwardHeaders(req),
       validateStatus: () => true,
     });
+    rewriteRedirectLocation(response.headers);
     res.status(getResponseStatus(response.status)).set(response.headers).send(response.data);
   } catch (e) {
     const status = e.response?.status ?? 502;
