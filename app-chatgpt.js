@@ -4,7 +4,9 @@ const axios = require('axios');
 const { get } = require('./proxy-config.cjs');
 
 const app = express();
-const { port: PORT, backend: BACKEND, ngrok: NGROK_URL, alwaysReturn200: ALWAYS_RETURN_200 } = get();
+const { port: PORT, backend: BACKEND, mcpBaseUrl: MCP_BACKEND, ngrok: NGROK_URL, alwaysReturn200: ALWAYS_RETURN_200 } = get();
+const PROXY_BACKEND = MCP_BACKEND || BACKEND;
+const OAUTH_BACKEND = PROXY_BACKEND.replace('mcp-', 'oauth2-');
 // IMPORTANT: capture raw body (do NOT use express.json())
 app.use(express.raw({ type: '*/*' }));
 function forwardHeaders(req) {
@@ -46,7 +48,7 @@ app.get('/.well-known/oauth-authorization-server', (req, res) => {
   const baseUrl = NGROK_URL || `https://${req.headers['x-forwarded-host'] || req.headers.host}`;
   res.json({
     issuer: baseUrl,
-    authorization_endpoint: `${baseUrl}/authorize`,
+    authorization_endpoint: `${OAUTH_BACKEND}/authorize`,
     token_endpoint: `${baseUrl}/token`,
     registration_endpoint: `${baseUrl}/register-public-client`,
     scopes_supported: [],
@@ -60,17 +62,17 @@ app.get('/.well-known/oauth-authorization-server', (req, res) => {
 
 app.options('*', async (req, res) => {
   try {
-    let url = BACKEND;
+    let url;
 
     if (req.originalUrl.includes('oauth-authorization-server') || 
       req.originalUrl.includes('oauth2') || 
       req.originalUrl.includes('token') || 
       req.originalUrl.includes('register-public-client') ||
       req.originalUrl.includes('authorize')) {
-      url = `${BACKEND.replace('mcp-', 'oauth2-')}${req.originalUrl}`;
+      url = `${OAUTH_BACKEND}${req.originalUrl}`;
       url = url.replace('/chatgpt-app', '');
     } else {
-      url = `${BACKEND}${req.originalUrl}`;
+      url = `${PROXY_BACKEND}${req.originalUrl}`;
     }
 
     const response = await axios({
@@ -88,23 +90,23 @@ app.options('*', async (req, res) => {
 });
 app.post('*', async (req, res) => {
   try {
-    let url = BACKEND;
+    let url;
 
     if (req.originalUrl.includes('oauth-authorization-server') || 
       req.originalUrl.includes('oauth2') || 
       req.originalUrl.includes('token') || 
       req.originalUrl.includes('register-public-client') ||
       req.originalUrl.includes('authorize')) {
-      url = `${BACKEND.replace('mcp-', 'oauth2-')}${req.originalUrl}`;
+      url = `${OAUTH_BACKEND}${req.originalUrl}`;
       url = url.replace('/chatgpt-app', '');
     } else {
-      url = `${BACKEND}${req.originalUrl}`;
+      url = `${PROXY_BACKEND}${req.originalUrl}`;
     }
 
     console.log(`Forwarding POST [chatgpt] request to: ${url} from (${req.originalUrl})`);
     const response = await axios({
       method: 'post',
-      url: url || `${BACKEND}${req.originalUrl}`,
+      url: url || `${PROXY_BACKEND}${req.originalUrl}`,
       // forward the original raw bytes exactly
       data: req.body, // Buffer from express.raw
       headers: forwardHeaders(req),
@@ -121,24 +123,24 @@ app.post('*', async (req, res) => {
 
 app.get("*", async (req, res) => {
   try {
-    let url = BACKEND
+    let url;
 
     if (req.originalUrl.includes('oauth-authorization-server') || 
       req.originalUrl.includes('oauth2') || 
       req.originalUrl.includes('token') || 
       req.originalUrl.includes('register-public-client') ||
       req.originalUrl.includes('authorize')) {
-      url = `${BACKEND.replace('mcp-', 'oauth2-')}${req.originalUrl}`;
+      url = `${OAUTH_BACKEND}${req.originalUrl}`;
       url = url.replace('/chatgpt-app', '');
     } else {
-      url = `${BACKEND}${req.originalUrl}`;
+      url = `${PROXY_BACKEND}${req.originalUrl}`;
     }
 
     url = url.replace('/chatgpt', '');
     console.log(`Forwarding GET [chatgpt] request to: ${url} from (${req.originalUrl})`);
     const response = await axios({
       method: 'get',
-      url: url || `${BACKEND}${req.originalUrl}`,
+      url: url || `${PROXY_BACKEND}${req.originalUrl}`,
       headers: forwardHeaders(req),
       validateStatus: () => true,
     });

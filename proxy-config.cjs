@@ -17,7 +17,7 @@ function get() {
       if (!b || !b.BACKEND_BASE_URL) {
         throw new Error(`${CONFIG_PATH}: missing BACKEND_BASE_URL at ["${u}"]["${uc}"]`);
       }
-      fromFile = { backend: b.BACKEND_BASE_URL, ngrok: b.NGROK_URL };
+      fromFile = { backend: b.BACKEND_BASE_URL, mcpBaseUrl: b.MCP_BASE_URL, ngrok: b.NGROK_URL };
     }
     const filePort = Number(c.PORT);
     if (Number.isFinite(filePort) && filePort > 0) fromFile.port = filePort;
@@ -29,6 +29,7 @@ function get() {
   const envPort = Number(env.PORT);
   const out = {
     backend: env.BACKEND_BASE_URL || fromFile.backend,
+    mcpBaseUrl: env.MCP_BASE_URL || fromFile.mcpBaseUrl,
     ngrok: env.NGROK_URL || fromFile.ngrok,
     port: Number.isFinite(envPort) && envPort > 0 ? envPort : (fromFile.port || 3000),
     alwaysReturn200:
