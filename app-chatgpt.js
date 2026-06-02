@@ -1,8 +1,8 @@
 // proxy.js - ChatGPT Apps version
 const express = require('express');
 const axios = require('axios');
-const dotenv = require('dotenv');
-dotenv.config();
+const { get } = require('./proxy-config.cjs');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const BACKEND = process.env.BACKEND_BASE_URL;
