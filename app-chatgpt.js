@@ -82,7 +82,7 @@ app.options('*', async (req, res) => {
       validateStatus: () => true,
     });
     console.log(`Forwarding OPTIONS [chatgpt] request to: ${url} (${req.originalUrl})`);
-    res.status(getResponseStatus(response.status)).set(response.headers).send(response.data);
+    res.status(getResponseStatus(response.status)).set(response.headers).send(typeof response.data === 'number' ? String(response.data) : response.data);
   } catch (e) {
     const status = e.response?.status ?? 502;
     res.status(getResponseStatus(status)).set(e.response?.headers ?? {}).send(e.response?.data ?? 'Upstream error');
@@ -114,7 +114,7 @@ app.post('*', async (req, res) => {
       maxBodyLength: Infinity,
       validateStatus: () => true,
     });
-    res.status(getResponseStatus(response.status)).set(response.headers).send(response.data);
+    res.status(getResponseStatus(response.status)).set(response.headers).send(typeof response.data === 'number' ? String(response.data) : response.data);
   } catch (e) {
     const status = e.response?.status ?? 502;
     res.status(getResponseStatus(status)).set(e.response?.headers ?? {}).send(e.response?.data ?? 'Upstream error');
@@ -144,7 +144,7 @@ app.get("*", async (req, res) => {
       headers: forwardHeaders(req),
       validateStatus: () => true,
     });
-    res.status(getResponseStatus(response.status)).set(response.headers).send(response.data);
+    res.status(getResponseStatus(response.status)).set(response.headers).send(typeof response.data === 'number' ? String(response.data) : response.data);
   } catch (e) {
     const status = e.response?.status ?? 502;
     res.status(getResponseStatus(status)).set(e.response?.headers ?? {}).send(e.response?.data ?? 'Upstream error');

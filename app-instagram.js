@@ -34,7 +34,7 @@ app.post('*', async (req, res) => {
       maxBodyLength: Infinity,
       validateStatus: () => true,
     });
-    res.status(response.status).set(response.headers).send(response.data);
+    res.status(response.status).set(response.headers).send(typeof response.data === 'number' ? String(response.data) : response.data);
   } catch (e) {
     const status = e.response?.status ?? 502;
     res.status(status).send(e.response?.data ?? 'Upstream error');
@@ -59,7 +59,7 @@ app.get("*", async (req, res) => {
     if (!isRedirect && data && typeof data === 'object' && 'content' in data) {
       res.status(response.status).send(String(data.content));
     } else {
-      res.status(response.status).set(response.headers).send(data);
+      res.status(response.status).set(response.headers).send(typeof data === 'number' ? String(data) : data);
     }
   } catch (e) {
     const status = e.response?.status ?? 502;
